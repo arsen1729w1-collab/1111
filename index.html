@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Accounts Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 16px;
+            padding-bottom: 80px;
+            color: #fff;
+        }
+        .header {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(0,0,0,0.8));
+            border-radius: 28px;
+            margin-bottom: 20px;
+            border: 1px solid #ffd700;
+        }
+        .header h2 { font-size: 28px; color: #ffd700; }
+        .balance-card {
+            background: rgba(0,0,0,0.7);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ffd700;
+        }
+        .balance-amount { font-size: 32px; font-weight: bold; color: #ffd700; }
+        .deposit-btn {
+            background: #1a1a1a;
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .section-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: #1a1a1a;
+            border: 1px solid #ffd700;
+            padding: 12px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: bold;
+            white-space: nowrap;
+            flex: 1;
+            text-align: center;
+        }
+        .tab-btn.active { background: #ffd700; color: #000; }
+        .account-card {
+            background: rgba(0,0,0,0.7);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        .account-country { font-size: 18px; font-weight: bold; color: #ffd700; }
+        .account-phone { font-size: 14px; color: #888; margin: 5px 0; }
+        .account-price { font-size: 22px; font-weight: bold; color: #ffd700; margin-top: 8px; }
+        .buy-btn {
+            background: #1a1a1a;
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            padding: 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 12px;
+            width: 100%;
+            font-weight: bold;
+        }
+        .requisites-card {
+            background: rgba(0,0,0,0.85);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ffd700;
+        }
+        .requisites-text {
+            font-family: monospace;
+            font-size: 18px;
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 16px;
+            text-align: center;
+            color: #ffd700;
+        }
+        .copy-btn, .support-btn, .confirm-deposit-btn {
+            background: #1a1a1a;
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            padding: 12px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .deposit-form {
+            background: rgba(0,0,0,0.85);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ffd700;
+        }
+        .deposit-input {
+            width: 100%;
+            padding: 14px;
+            background: #1a1a1a;
+            border: 1px solid #ffd700;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #0a0a0a;
+            border-top: 1px solid #ffd700;
+            display: flex;
+            padding: 12px;
+            z-index: 10;
+        }
+        .nav-item {
+            text-align: center; cursor: pointer; padding: 10px; flex: 1;
+            border-radius: 30px; color: #fff; font-weight: bold;
+        }
+        .nav-item.active { background: #ffd700; color: #000; }
+        .loading { text-align: center; padding: 40px; color: #888; }
+        .section-title { font-size: 20px; font-weight: bold; margin: 20px 0 12px; color: #ffd700; }
+        .toast {
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: #000; border: 1px solid #ffd700; color: #ffd700;
+            padding: 12px 24px; border-radius: 40px; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🛡️ Accounts Shop</h2>
+        <p>Готовые аккаунты Telegram</p>
+    </div>
+    
+    <div class="balance-card">
+        <div><div style="font-size: 14px; color:#888;">💰 Баланс</div><div class="balance-amount" id="balance">0 ₽</div></div>
+        <button class="deposit-btn" onclick="showDepositForm()">💳 Пополнить</button>
+    </div>
+    
+    <div class="section-tabs" id="sectionTabs">
+        <button class="tab-btn active" data-section="all">🌍 Все</button>
+        <button class="tab-btn" data-section="virtual">📱 Виртуальные</button>
+        <button class="tab-btn" data-section="physical">📦 Физические</button>
+        <button class="tab-btn" data-section="russian">🇷🇺 Русские</button>
+    </div>
+    
+    <div id="depositFormContainer" style="display: none;">
+        <div class="deposit-form">
+            <input type="number" id="depositAmount" class="deposit-input" placeholder="Сумма (мин. 70₽)" min="70" value="100">
+            <button class="confirm-deposit-btn" onclick="processDeposit()">💰 Продолжить</button>
+            <button class="copy-btn" onclick="cancelDeposit()">◀️ Назад</button>
+        </div>
+    </div>
+    
+    <div id="paymentInfo" style="display: none;">
+        <div class="requisites-card">
+            <div class="requisites-title">💳 Реквизиты для оплаты</div>
+            <div class="requisites-text" id="cardNumber">2202 2081 8314 0145</div>
+            <button class="copy-btn" onclick="copyCard()">📋 Копировать номер карты</button>
+            <div class="requisites-title" style="margin-top: 12px;">🏦 Банк</div>
+            <div class="requisites-text">СБП / Перевод по номеру карты</div>
+            <div class="requisites-title" style="margin-top: 12px;">📝 Укажите в комментарии:</div>
+            <div class="requisites-text" id="paymentComment">Ваш Telegram ID</div>
+            <button class="confirm-deposit-btn" onclick="sendPaymentConfirmation()">✅ Я оплатил</button>
+            <button class="copy-btn" onclick="cancelDeposit()">◀️ Назад</button>
+        </div>
+    </div>
+    
+    <div id="content"><div class="loading">✨ Загрузка аккаунтов...</div></div>
+    <button class="support-btn" onclick="openSupport()">🆘 Связаться с поддержкой</button>
+    
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="loadAccounts()">🛒 Магазин</div>
+        <div class="nav-item" onclick="showHistory()">📦 История</div>
+        <div class="nav-item" onclick="loadProfile()">👤 Профиль</div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        
+        let userId = tg.initDataUnsafe?.user?.id;
+        let botToken = "8647534268:AAGaQhbN0gY4vwy3Azox9UeGHr3BTnnB0ZI";
+        let apiUrl = `https://api.telegram.org/bot${botToken}`;
+        
+        let allAccounts = [];
+        let currentSection = "all";
+        let currentAmount = 0;
+        
+        function showToast(msg) {
+            let toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+        
+        function copyCard() {
+            let card = document.getElementById('cardNumber').innerText.replace(/\s/g, '');
+            navigator.clipboard.writeText(card);
+            showToast('✅ Номер карты скопирован');
+        }
+        
+        function openSupport() { tg.openTelegramLink('https://t.me/solomka_legends'); }
+        
+        function showDepositForm() {
+            document.getElementById('depositFormContainer').style.display = 'block';
+            document.getElementById('paymentInfo').style.display = 'none';
+            document.getElementById('content').style.display = 'none';
+            document.getElementById('sectionTabs').style.display = 'none';
+        }
+        
+        function cancelDeposit() {
+            document.getElementById('depositFormContainer').style.display = 'none';
+            document.getElementById('paymentInfo').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('sectionTabs').style.display = 'flex';
+            loadAccounts();
+        }
+        
+        function processDeposit() {
+            let amount = parseInt(document.getElementById('depositAmount').value);
+            if (isNaN(amount) || amount < 70) {
+                tg.showAlert("❌ Минимальная сумма: 70₽");
+                return;
+            }
+            currentAmount = amount;
+            document.getElementById('paymentComment').innerText = userId;
+            document.getElementById('depositFormContainer').style.display = 'none';
+            document.getElementById('paymentInfo').style.display = 'block';
+        }
+        
+        function sendPaymentConfirmation() {
+            let name = userId;
+            tg.showConfirm(`💰 Отправить заявку на ${currentAmount}₽?\n\nID: ${name}`, async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        await fetch(`${apiUrl}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                chat_id: userId, 
+                                text: JSON.stringify({ 
+                                    action: 'deposit', 
+                                    amount: currentAmount, 
+                                    name: name, 
+                                    user_id: userId 
+                                }) 
+                            })
+                        });
+                        tg.showAlert(`✅ Заявка отправлена!\n💰 ${currentAmount}₽\n🆔 ID: ${name}\n\nОжидайте подтверждения.`);
+                        cancelDeposit();
+                    } catch(e) {
+                        tg.showAlert('❌ Ошибка отправки');
+                    }
+                }
+            });
+        }
+        
+        async function loadAccounts() {
+            document.getElementById('content').innerHTML = '<div class="loading">✨ Загрузка...</div>';
+            
+            try {
+                const response = await fetch(`${apiUrl}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        chat_id: userId, 
+                        text: JSON.stringify({ action: 'get_accounts', user_id: userId }) 
+                    })
+                });
+                const result = await response.json();
+                if (result.ok && result.result) {
+                    let text = result.result.text;
+                    if (text.startsWith('{')) {
+                        allAccounts = JSON.parse(text);
+                    } else {
+                        allAccounts = [];
+                    }
+                } else {
+                    allAccounts = [];
+                }
+            } catch(e) {
+                allAccounts = [];
+            }
+            
+            let filtered = allAccounts.filter(acc => {
+                if (currentSection === "all") return true;
+                return acc.type === currentSection;
+            });
+            
+            if (filtered.length === 0) {
+                document.getElementById('content').innerHTML = '<div class="loading">📭 Аккаунтов пока нет</div>';
+                return;
+            }
+            
+            let html = `<div class="section-title">🛒 ${currentSection === "all" ? "Все" : (currentSection === "virtual" ? "Виртуальные" : (currentSection === "physical" ? "Физические" : "Русские"))}</div>`;
+            for (let acc of filtered) {
+                let typeIcon = acc.type === 'virtual' ? '🌍' : (acc.type === 'physical' ? '📱' : '🇷🇺');
+                html += `
+                    <div class="account-card">
+                        <div class="account-country">${typeIcon} ${acc.country || "Неизвестно"}</div>
+                        <div class="account-phone">📱 ${acc.phone || "Нет номера"}</div>
+                        <div class="account-price">💰 ${acc.price || 0} ₽</div>
+                        <button class="buy-btn" onclick="buyAccount(${acc.id}, ${acc.price})">Купить</button>
+                    </div>
+                `;
+            }
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        async function buyAccount(accountId, price) {
+            let balance = parseInt(document.getElementById('balance').innerText) || 0;
+            if (balance < price) {
+                tg.showAlert(`❌ Недостаточно средств!\n💰 Баланс: ${balance}₽\n💸 Нужно: ${price}₽\n\nПополните баланс (мин. 70₽)`);
+                return;
+            }
+            tg.showConfirm(`Купить аккаунт за ${price}₽?`, async (confirmed) => {
+                if (confirmed) {
+                    await fetch(`${apiUrl}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            chat_id: userId, 
+                            text: JSON.stringify({ action: 'buy', account_id: accountId, user_id: userId }) 
+                        })
+                    });
+                    tg.showAlert(`✅ Аккаунт куплен!`);
+                    loadAccounts();
+                }
+            });
+        }
+        
+        async function showHistory() { document.getElementById('content').innerHTML = '<div class="loading">✨ Загрузка...</div><div class="loading">📦 История покупок появится здесь</div>'; }
+        
+        async function loadProfile() {
+            document.getElementById('content').innerHTML = `
+                <div class="section-title">👤 Мой профиль</div>
+                <div class="account-card">
+                    <div>🆔 ID: ${userId || 'не указан'}</div>
+                    <div>👤 Username: @${tg.initDataUnsafe?.user?.username || 'не указан'}</div>
+                </div>
+            `;
+        }
+        
+        document.getElementById('sectionTabs').addEventListener('click', (e) => {
+            let btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            let section = btn.dataset.section;
+            if (!section) return;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentSection = section;
+            loadAccounts();
+        });
+        
+        loadAccounts();
+    </script>
+</body>
+</html>
